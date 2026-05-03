@@ -1,0 +1,13 @@
+{
+  "name": "OCaml Order Book",
+  "image": "ocaml/opam:ubuntu-24.04-ocaml-5.2",
+  "postCreateCommand": "opam install alcotest --yes && opam exec -- dune build",
+  "remoteEnv": {
+    "OPAMYES": "1"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": ["ocamllabs.ocaml-platform"]
+    }
+  }
+}
