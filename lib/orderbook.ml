@@ -77,7 +77,7 @@ let depth book n =
   let take_levels seq =
     seq
     |> Seq.filter_map (fun (price, (orders : Order.order list)) ->
-        let qty = List.fold_left (fun acc o -> acc + o.Order.quantity) 0 orders in
+        let qty = List.fold_left (fun acc (o : Order.order) -> acc + o.quantity) 0 orders in
         if qty > 0 then Some (price, qty) else None)
     |> Seq.take n
     |> List.of_seq
@@ -121,7 +121,7 @@ let pp_book book =
 
 let volume_at_price side price book =
   let sum orders =
-    List.fold_left (fun acc o -> acc + o.Order.quantity) 0 orders
+    List.fold_left (fun acc (o : Order.order) -> acc + o.quantity) 0 orders
   in
   match side with
   | Order.Buy ->
