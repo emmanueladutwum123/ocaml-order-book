@@ -17,10 +17,13 @@ jobs:
           ocaml-compiler: 5.2.0
 
       - name: Install dependencies
-        run: opam install alcotest --yes
+        run: opam install . --deps-only --yes
 
       - name: Build
         run: opam exec -- dune build
 
       - name: Test
         run: opam exec -- dune test
+
+      - name: Simulate (smoke test)
+        run: opam exec -- dune exec bin/main.exe -- --simulate --steps=200

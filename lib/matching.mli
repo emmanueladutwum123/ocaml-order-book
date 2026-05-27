@@ -18,3 +18,27 @@ val match_sell :
   Order.order list AskMap.t ->
   Order.fill list ->
   Order.order option * Order.order list BidMap.t * Order.order list AskMap.t * Order.fill list
+
+val match_ioc_buy :
+  Order.order ->
+  Order.order list BidMap.t ->
+  Order.order list AskMap.t ->
+  Order.order option * Order.order list BidMap.t * Order.order list AskMap.t * Order.fill list
+
+val match_ioc_sell :
+  Order.order ->
+  Order.order list BidMap.t ->
+  Order.order list AskMap.t ->
+  Order.order option * Order.order list BidMap.t * Order.order list AskMap.t * Order.fill list
+
+val match_fok_buy :
+  Order.order ->
+  Order.order list BidMap.t ->
+  Order.order list AskMap.t ->
+  Order.order option * Order.order list BidMap.t * Order.order list AskMap.t * Order.fill list
+
+val match_fok_sell :
+  Order.order ->
+  Order.order list BidMap.t ->
+  Order.order list AskMap.t ->
+  Order.order option * Order.order list BidMap.t * Order.order list AskMap.t * Order.fill list

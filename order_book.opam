@@ -1,0 +1,18 @@
+opam-version: "2.0"
+name:         "order_book"
+version:      "0.1.0"
+synopsis:     "Functional limit order book engine in OCaml"
+description:  "Price-time priority matching engine with limit, market, IOC, and FOK orders."
+maintainer:   "Emmanuel Adutwum <emmanuelsoneuclid10@gmail.com>"
+authors:      ["Emmanuel Adutwum"]
+license:      "MIT"
+homepage:     "https://github.com/emmanueladutwum123/ocaml-order-book"
+bug-reports:  "https://github.com/emmanueladutwum123/ocaml-order-book/issues"
+depends: [
+  "ocaml"   {>= "4.14"}
+  "dune"    {>= "3.0"}
+  "alcotest" {with-test}
+]
+build: [
+  ["dune" "build" "-p" name "-j" jobs]
+]

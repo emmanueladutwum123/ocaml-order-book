@@ -1,5 +1,5 @@
 type side = Buy | Sell
-type order_type = Limit | Market
+type order_type = Limit | Market | IOC | FOK
 
 type order = {
   id         : int;
@@ -19,6 +19,8 @@ type fill = {
 
 val create_limit  : int -> side -> float -> int -> int -> order
 val create_market : int -> side -> int -> int -> order
+val create_ioc    : int -> side -> float -> int -> int -> order
+val create_fok    : int -> side -> float -> int -> int -> order
 val pp_side       : side -> string
 val pp_order      : order -> string
 val pp_fill       : fill -> string
