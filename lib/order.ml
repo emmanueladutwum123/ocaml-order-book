@@ -1,5 +1,10 @@
 type side = Buy | Sell
-type order_type = Limit | Market
+
+(* Limit: rests in book if not filled
+   Market: crosses at any price
+   IOC (Immediate-or-Cancel): fills as much as possible, cancels remainder
+   FOK (Fill-or-Kill): must fill entirely or the order is cancelled *)
+type order_type = Limit | Market | IOC | FOK
 
 type order = {
   id         : int;
@@ -23,9 +28,19 @@ let create_limit id side price quantity timestamp =
 let create_market id side quantity timestamp =
   { id; side; order_type = Market; price = 0.0; quantity; timestamp }
 
+let create_ioc id side price quantity timestamp =
+  { id; side; order_type = IOC; price; quantity; timestamp }
+
+let create_fok id side price quantity timestamp =
+  { id; side; order_type = FOK; price; quantity; timestamp }
+
 let pp_side = function Buy -> "BUY" | Sell -> "SELL"
 
-let pp_order_type = function Limit -> "LIMIT" | Market -> "MARKET"
+let pp_order_type = function
+  | Limit  -> "LIMIT"
+  | Market -> "MARKET"
+  | IOC    -> "IOC"
+  | FOK    -> "FOK"
 
 let pp_order o =
   Printf.sprintf "[#%d] %s %s @ %.2f qty=%d t=%d"

@@ -1,80 +1,78 @@
 let () = Random.self_init ()
 
-let book   = ref Orderbook.empty
+let book    = ref Orderbook.empty
 let next_id = ref 1
 let next_ts = ref 0
 
 let fresh_id () = let id = !next_id in incr next_id; id
 let fresh_ts () = let t  = !next_ts in incr next_ts; t
 
-let apply_fills fills =
+let submit o =
+  Printf.printf "Added: %s\n" (Order.pp_order o);
+  let (b, fills) = Orderbook.add_order o !book in
+  book := b;
   List.iter (fun f -> print_endline ("  " ^ Order.pp_fill f)) fills
 
-let cmd_buy price qty =
-  let o = Order.create_limit (fresh_id ()) Order.Buy price qty (fresh_ts ()) in
-  Printf.printf "Added: %s\n" (Order.pp_order o);
-  let (b, fills) = Orderbook.add_order o !book in
-  book := b;
-  apply_fills fills
-
-let cmd_sell price qty =
-  let o = Order.create_limit (fresh_id ()) Order.Sell price qty (fresh_ts ()) in
-  Printf.printf "Added: %s\n" (Order.pp_order o);
-  let (b, fills) = Orderbook.add_order o !book in
-  book := b;
-  apply_fills fills
-
-let cmd_market_buy qty =
-  let o = Order.create_market (fresh_id ()) Order.Buy qty (fresh_ts ()) in
-  Printf.printf "Market BUY qty=%d\n" qty;
-  let (b, fills) = Orderbook.add_order o !book in
-  book := b;
-  apply_fills fills
-
-let cmd_market_sell qty =
-  let o = Order.create_market (fresh_id ()) Order.Sell qty (fresh_ts ()) in
-  Printf.printf "Market SELL qty=%d\n" qty;
-  let (b, fills) = Orderbook.add_order o !book in
-  book := b;
-  apply_fills fills
+let cmd_buy         p q = submit (Order.create_limit   (fresh_id ()) Order.Buy  p q (fresh_ts ()))
+let cmd_sell        p q = submit (Order.create_limit   (fresh_id ()) Order.Sell p q (fresh_ts ()))
+let cmd_market_buy    q = submit (Order.create_market  (fresh_id ()) Order.Buy    q (fresh_ts ()))
+let cmd_market_sell   q = submit (Order.create_market  (fresh_id ()) Order.Sell   q (fresh_ts ()))
+let cmd_ioc_buy     p q = submit (Order.create_ioc     (fresh_id ()) Order.Buy  p q (fresh_ts ()))
+let cmd_ioc_sell    p q = submit (Order.create_ioc     (fresh_id ()) Order.Sell p q (fresh_ts ()))
+let cmd_fok_buy     p q = submit (Order.create_fok     (fresh_id ()) Order.Buy  p q (fresh_ts ()))
+let cmd_fok_sell    p q = submit (Order.create_fok     (fresh_id ()) Order.Sell p q (fresh_ts ()))
 
 let cmd_cancel id =
   book := Orderbook.cancel_order id !book;
   Printf.printf "Cancelled order #%d\n" id
 
+let cmd_stats () =
+  Printf.printf "Trades: %d  Volume: %d%s\n"
+    (Orderbook.total_trades !book)
+    (Orderbook.total_volume !book)
+    (match Orderbook.vwap !book with
+     | Some v -> Printf.sprintf "  VWAP: %.4f" v
+     | None   -> "")
+
 let run_interactive () =
-  print_endline "OCaml Limit Order Book — Jane Street style";
+  print_endline "OCaml Limit Order Book — price-time priority matching engine";
   print_endline "Commands:";
-  print_endline "  buy <price> <qty>       — add limit buy";
-  print_endline "  sell <price> <qty>      — add limit sell";
-  print_endline "  market_buy <qty>        — market buy";
-  print_endline "  market_sell <qty>       — market sell";
-  print_endline "  cancel <id>             — cancel order";
-  print_endline "  book                    — display order book";
+  print_endline "  buy <price> <qty>        — limit buy";
+  print_endline "  sell <price> <qty>       — limit sell";
+  print_endline "  market_buy <qty>         — market buy";
+  print_endline "  market_sell <qty>        — market sell";
+  print_endline "  ioc_buy <price> <qty>    — immediate-or-cancel buy";
+  print_endline "  ioc_sell <price> <qty>   — immediate-or-cancel sell";
+  print_endline "  fok_buy <price> <qty>    — fill-or-kill buy";
+  print_endline "  fok_sell <price> <qty>   — fill-or-kill sell";
+  print_endline "  cancel <id>              — cancel order by id";
+  print_endline "  book                     — print order book";
+  print_endline "  stats                    — trades, volume, VWAP";
   print_endline "  quit";
   let running = ref true in
   while !running do
     print_string "\n> ";
     flush stdout;
-    let line =
-      try input_line stdin
-      with End_of_file -> "quit"
-    in
+    let line = try input_line stdin with End_of_file -> "quit" in
     let tokens =
       String.split_on_char ' ' (String.trim line)
       |> List.filter (fun s -> s <> "")
     in
     (match tokens with
-     | ["buy";  p; q]       -> cmd_buy        (float_of_string p) (int_of_string q)
-     | ["sell"; p; q]       -> cmd_sell       (float_of_string p) (int_of_string q)
-     | ["market_buy";  q]   -> cmd_market_buy  (int_of_string q)
-     | ["market_sell"; q]   -> cmd_market_sell (int_of_string q)
-     | ["cancel"; id]       -> cmd_cancel      (int_of_string id)
-     | ["book"]             -> print_string (Orderbook.pp_book !book)
-     | ["quit"] | ["exit"]  -> running := false
-     | []                   -> ()
-     | _                    ->
-       print_endline "Unknown command. Try: buy 100.0 10")
+     | ["buy";         p; q] -> cmd_buy         (float_of_string p) (int_of_string q)
+     | ["sell";        p; q] -> cmd_sell        (float_of_string p) (int_of_string q)
+     | ["market_buy";     q] -> cmd_market_buy                      (int_of_string q)
+     | ["market_sell";    q] -> cmd_market_sell                     (int_of_string q)
+     | ["ioc_buy";     p; q] -> cmd_ioc_buy     (float_of_string p) (int_of_string q)
+     | ["ioc_sell";    p; q] -> cmd_ioc_sell    (float_of_string p) (int_of_string q)
+     | ["fok_buy";     p; q] -> cmd_fok_buy     (float_of_string p) (int_of_string q)
+     | ["fok_sell";    p; q] -> cmd_fok_sell    (float_of_string p) (int_of_string q)
+     | ["cancel";       id ] -> cmd_cancel (int_of_string id)
+     | ["book"]              -> print_string (Orderbook.pp_book !book)
+     | ["stats"]             -> cmd_stats ()
+     | ["quit"] | ["exit"]   -> running := false
+     | []                    -> ()
+     | _                     -> print_endline "Unknown command.")
   done
 
 let run_simulation steps =
